@@ -7,6 +7,8 @@
  * routes to the real Sol variant).
  */
 
+import { exactModelSpec } from "./modelSpecs.ts";
+
 export type ProviderFamily = "anthropic" | "open_ai" | "google" | "x_ai";
 
 /** Reasoning levels the Zed-hosted GPT-5.6 route accepts; anything else is a 400. */
@@ -101,19 +103,21 @@ export function clampOutputBudget(model: string, requested: number | null, effor
 }
 
 /**
- * Conservative per-family ceilings. The upstream catalog (`GET /models`) lists
- * ids only and carries no metadata, so these stand in for the window and
- * output cap of each family rather than a per-model measurement.
+ * Per-model limits from the built-in twin catalog, with a family fallback for
+ * ids that are not in the map. The old family-only ceilings under-declared
+ * GPT-5.6/6 and Claude 5 by a factor of eight in the window.
  */
 export function familyLimits(model: string): { contextWindow: number; maxTokens: number } {
+	const known = exactModelSpec(model) ?? exactModelSpec(normalizeModelName(model));
+	if (known) return known;
 	switch (providerFamily(model)) {
 		case "anthropic":
-			return { contextWindow: 200_000, maxTokens: ANTHROPIC_MAX_OUTPUT_TOKENS };
+			return { contextWindow: 1_000_000, maxTokens: ANTHROPIC_MAX_OUTPUT_TOKENS };
 		case "open_ai":
-			return { contextWindow: 128_000, maxTokens: 32_768 };
+			return { contextWindow: 1_050_000, maxTokens: 128_000 };
 		case "google":
-			return { contextWindow: 1_048_576, maxTokens: 32_768 };
+			return { contextWindow: 1_048_576, maxTokens: 65_536 };
 		case "x_ai":
-			return { contextWindow: 262_144, maxTokens: 32_768 };
+			return { contextWindow: 256_000, maxTokens: 64_000 };
 	}
 }

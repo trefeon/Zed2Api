@@ -27,7 +27,7 @@ Git sources are also accepted:
 
 ```sh
 omp plugin install github:trefeon/Zed2Api
-omp plugin install github:trefeon/Zed2Api#v0.1.0
+omp plugin install github:trefeon/Zed2Api#v0.1.1
 ```
 
 A `.tgz` is not an installable source. Unpack it and install the directory

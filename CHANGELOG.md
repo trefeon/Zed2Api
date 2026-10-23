@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-10-23
+
+### Fixed
+
+- Model catalog limits now use the highest specification declared for the same
+  model in the built-in provider catalog instead of conservative family-wide
+  ceilings. GPT-5.6 and GPT-6 advertise 1,050,000 context and 128,000 output
+  tokens; Claude Sonnet 5 and Haiku 5 advertise 1,000,000 and 128,000; Gemini
+  advertises 1,048,576 and 65,536. Older and unknown ids keep their own cap or
+  the family fallback.
+
 ## [0.1.0] - 2026-10-23
 
 ### Added

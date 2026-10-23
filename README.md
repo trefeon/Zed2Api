@@ -82,6 +82,14 @@ refresh updates the cache in `~/.zed2api/model-catalog.json`. OMP merges
 discovered models into its catalog; PI seeds its startup registration from the
 cache so later processes see the full list.
 
+Window and output limits come from the highest specification declared for the
+same model in the built-in provider catalog, not from a family-wide ceiling.
+Current examples: GPT-5.6 and GPT-6 advertise 1,050,000 context and 128,000
+output tokens; Claude Sonnet 5 and Haiku 5 advertise 1,000,000 and 128,000;
+Gemini advertises 1,048,576 and 65,536. New ids that are not in the static map
+fall back to the family's highest specification. `ZED2API_CONTEXT_WINDOW` and
+the per-family output overrides still win.
+
 ## Usage
 
 `/zed usage` reports the turns this provider served, using Zed's published

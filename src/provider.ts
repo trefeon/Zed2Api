@@ -409,10 +409,11 @@ function tryParse(json: string): unknown {
 
 /**
  * Model declaration for the host. Every family has a request builder, so the
- * whole catalog is offered; window and output limits come from the family, and
- * the env knobs (0 = unset) exist only to override them for plan experiments.
- * Reasoning is advertised only where a builder actually carries the control —
- * Google and xAI requests have none, so offering a selector would lie.
+ * whole catalog is offered; window and output limits come from the highest
+ * twin specification for the model, with env knobs (0 = unset) to override them
+ * for plan experiments. Reasoning is advertised only where a builder actually
+ * carries the control — Google and xAI requests have none, so offering a
+ * selector would lie.
  */
 export function zedModelConfig(id: string): ProviderModelConfig {
 	const family = providerFamily(id);

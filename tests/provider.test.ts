@@ -251,39 +251,51 @@ describe("assistant message shape", () => {
 });
 
 describe("zedModelConfig", () => {
-	test("advertises a Google model with its family limits and no thinking control", () => {
+	test("advertises a Google model with its twin limits and no thinking control", () => {
 		const config = zedModelConfig("gemini-2.5-pro");
 		expect(config.contextWindow).toBe(1_048_576);
-		expect(config.maxTokens).toBe(32_768);
+		expect(config.maxTokens).toBe(65_536);
 		expect(config.reasoning).toBe(false);
 		expect(config.thinking).toBeUndefined();
 		expect(config.input).toEqual(["text", "image"]);
 	});
 
-	test("advertises an xAI model with its family window and no thinking control", () => {
+	test("advertises an xAI model with its twin window and no thinking control", () => {
 		const config = zedModelConfig("grok-4");
-		expect(config.contextWindow).toBe(262_144);
-		expect(config.maxTokens).toBe(32_768);
+		expect(config.contextWindow).toBe(256_000);
+		expect(config.maxTokens).toBe(64_000);
 		expect(config.reasoning).toBe(false);
 		expect(config.thinking).toBeUndefined();
 		expect(config.input).toEqual(["text", "image"]);
 	});
 
-	test("keeps the Anthropic window, output cap and effort selector", () => {
+	test("uses the twin Anthropic window, output cap and effort selector", () => {
 		const config = zedModelConfig("claude-sonnet-5");
-		expect(config.contextWindow).toBe(200_000);
+		expect(config.contextWindow).toBe(1_000_000);
 		expect(config.maxTokens).toBe(128_000);
 		expect(config.reasoning).toBe(true);
 		expect(config.thinking).toEqual({ mode: "effort", efforts: ["low", "medium", "high", "xhigh"], defaultLevel: "xhigh" });
 		expect(config.input).toEqual(["text", "image"]);
 	});
 
-	test("keeps the OpenAI limits and default xhigh effort", () => {
+	test("uses the twin OpenAI limits and default xhigh effort", () => {
 		const config = zedModelConfig("gpt-5.6-sol");
-		expect(config.contextWindow).toBe(128_000);
-		expect(config.maxTokens).toBe(32_768);
+		expect(config.contextWindow).toBe(1_050_000);
+		expect(config.maxTokens).toBe(128_000);
 		expect(config.reasoning).toBe(true);
 		expect(config.thinking).toEqual({ mode: "effort", efforts: ["low", "medium", "high", "xhigh"], defaultLevel: "xhigh" });
+	});
+
+	test("uses per-model twin limits for Luna and older Claude", () => {
+		const luna = zedModelConfig("gpt-5.6-luna");
+		expect(luna.contextWindow).toBe(1_050_000);
+		expect(luna.maxTokens).toBe(128_000);
+		const gpt6 = zedModelConfig("gpt-6-luna");
+		expect(gpt6.contextWindow).toBe(1_050_000);
+		expect(gpt6.maxTokens).toBe(128_000);
+		const haiku = zedModelConfig("claude-haiku-4-5");
+		expect(haiku.contextWindow).toBe(200_000);
+		expect(haiku.maxTokens).toBe(64_000);
 	});
 
 	test("lets the env window override every family", () => {
@@ -299,14 +311,14 @@ describe("zedModelConfig", () => {
 		withEnv({ ZED2API_CLAUDE_MAX_TOKENS: "16000", ZED2API_GPT_MAX_TOKENS: "8000" }, () => {
 			expect(zedModelConfig("claude-sonnet-5").maxTokens).toBe(16_000);
 			expect(zedModelConfig("gpt-5.6-sol").maxTokens).toBe(8_000);
-			expect(zedModelConfig("gemini-2.5-pro").maxTokens).toBe(32_768);
-			expect(zedModelConfig("grok-4").maxTokens).toBe(32_768);
+			expect(zedModelConfig("gemini-2.5-pro").maxTokens).toBe(65_536);
+			expect(zedModelConfig("grok-4").maxTokens).toBe(64_000);
 		});
 	});
 });
 
 describe("catalog discovery", () => {
-	test("keeps Gemini and xAI ids from the live catalog with their family limits", async () => {
+	test("keeps Gemini and xAI ids from the live catalog with their twin limits", async () => {
 		const stub = stubTransport({
 			bodies: [],
 			modelIds: ["gpt-5.6-sol", "claude-sonnet-5", "gemini-2.5-pro", "grok-4"],
@@ -316,18 +328,18 @@ describe("catalog discovery", () => {
 		const models = await provider.refreshModels();
 		expect(models.map((model) => model.id)).toEqual(["gpt-5.6-sol", "claude-sonnet-5", "gemini-2.5-pro", "grok-4"]);
 		const gemini = models.find((model) => model.id === "gemini-2.5-pro");
-		expect(gemini).toMatchObject({ contextWindow: 1_048_576, maxTokens: 32_768, reasoning: false });
+		expect(gemini).toMatchObject({ contextWindow: 1_048_576, maxTokens: 65_536, reasoning: false });
 		expect(gemini?.thinking).toBeUndefined();
 		const grok = models.find((model) => model.id === "grok-4");
-		expect(grok).toMatchObject({ contextWindow: 262_144, maxTokens: 32_768, reasoning: false });
+		expect(grok).toMatchObject({ contextWindow: 256_000, maxTokens: 64_000, reasoning: false });
 		expect(grok?.thinking).toBeUndefined();
 		expect(models.find((model) => model.id === "claude-sonnet-5")).toMatchObject({
-			contextWindow: 200_000,
+			contextWindow: 1_000_000,
 			maxTokens: 128_000,
 		});
 		expect(models.find((model) => model.id === "gpt-5.6-sol")).toMatchObject({
-			contextWindow: 128_000,
-			maxTokens: 32_768,
+			contextWindow: 1_050_000,
+			maxTokens: 128_000,
 		});
 	});
 });

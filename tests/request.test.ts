@@ -425,10 +425,10 @@ describe("dispatch and family limits", () => {
 		expect(grok.provider_request.contents).toBeUndefined();
 	});
 
-	test("reports conservative ceilings per family", () => {
-		expect(familyLimits("claude-sonnet-5")).toEqual({ contextWindow: 200_000, maxTokens: 128_000 });
-		expect(familyLimits("gpt-5.6-sol")).toEqual({ contextWindow: 128_000, maxTokens: 32_768 });
-		expect(familyLimits("gemini-2.5-pro")).toEqual({ contextWindow: 1_048_576, maxTokens: 32_768 });
-		expect(familyLimits("grok-4")).toEqual({ contextWindow: 262_144, maxTokens: 32_768 });
+	test("reports the highest twin ceilings per model", () => {
+		expect(familyLimits("claude-sonnet-5")).toEqual({ contextWindow: 1_000_000, maxTokens: 128_000 });
+		expect(familyLimits("gpt-5.6-sol")).toEqual({ contextWindow: 1_050_000, maxTokens: 128_000 });
+		expect(familyLimits("gemini-2.5-pro")).toEqual({ contextWindow: 1_048_576, maxTokens: 65_536 });
+		expect(familyLimits("grok-4")).toEqual({ contextWindow: 256_000, maxTokens: 64_000 });
 	});
 });
