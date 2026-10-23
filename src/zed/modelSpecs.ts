@@ -43,10 +43,11 @@ export const MODEL_SPECS: Readonly<Record<string, ModelLimits>> = {
 
 	// Google Gemini
 	"gemini-4-argon": { contextWindow: 1_048_576, maxTokens: 65_536 },
-	"gemini-3.1-pro-preview": { contextWindow: 1_048_576, maxTokens: 65_536 },
 	"gemini-3.8-flash": { contextWindow: 1_048_576, maxTokens: 65_536 },
+	"gemini-3.1-pro-preview": { contextWindow: 1_048_576, maxTokens: 65_536 },
 	"gemini-3.5-flash": { contextWindow: 1_048_576, maxTokens: 65_536 },
 	"gemini-3-flash": { contextWindow: 1_048_576, maxTokens: 65_536 },
+	"gemini-2.5-pro": { contextWindow: 1_048_576, maxTokens: 65_536 },
 
 	// xAI
 	"grok-4": { contextWindow: 256_000, maxTokens: 64_000 },

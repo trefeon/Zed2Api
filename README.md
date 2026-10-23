@@ -93,8 +93,11 @@ the per-family output overrides still win.
 ## Usage
 
 `/zed usage` reports the turns this provider served, using Zed's published
-hosted-model rates. A dashboard cookie adds the account-wide figures from
-`dashboard.zed.dev`, including the editor and other clients.
+hosted-model rates. Models that are not yet on Zed's price page use the
+provider list price +10%, the same markup. Long-context and date-based price
+tiers are not modeled; the base tier is used. A dashboard cookie adds the
+account-wide figures from `dashboard.zed.dev`, including the editor and other
+clients.
 
 ```sh
 /zed usage

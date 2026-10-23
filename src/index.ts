@@ -151,7 +151,7 @@ async function runCommand(deps: ZedProviderDeps, args: string, notify: Notify, s
 				try {
 					await store.ensureOrganization(account);
 					const jwt = await store.tokenFor(account);
-					writeCachedCatalog(account.userId, extractModelIds(await deps.transport.models(jwt)));
+					writeCachedCatalog(account.userId, extractModelIds(await deps.transport.models(jwt)), store.path);
 				} catch {
 					// The first token request resolves the organization again, and
 					// the catalog is refreshed on demand.
@@ -260,7 +260,7 @@ async function describeCatalog(deps: ZedProviderDeps, notify: Notify): Promise<s
 	try {
 		const jwt = await deps.store.tokenFor(account);
 		const ids = extractModelIds(await deps.transport.models(jwt));
-		writeCachedCatalog(account.userId, ids);
+		writeCachedCatalog(account.userId, ids, deps.store.path);
 		if (ids.length === 0) {
 			notify("Zed returned no models for this account.", "warning");
 			return "Context: /zed refresh";

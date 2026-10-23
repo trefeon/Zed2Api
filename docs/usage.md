@@ -28,8 +28,12 @@ Every completed turn appends one JSON line:
 - The file sits beside `accounts.json`; `ZED_USAGE_FILE` overrides the path.
 - Deleting the file resets local history. Dashboard history is unaffected.
 - Costs use Zed's published hosted-model prices (API list price +10%), taken
-  from `zed.dev/docs/account/zed-hosted-models` on 2026-10-23. Models without a
-  published rate still count tokens but are excluded from the dollar total.
+  from `zed.dev/docs/account/zed-hosted-models` on 2026-10-23. A model that is
+  absent from that page uses the provider's list price +10% (Claude Haiku 5.5,
+  Gemini 4 Argon, Gemini 3.8 Flash, Gemini 2.5 Pro, Grok 4). Tiers switch on
+  prompt length or date are not modeled; the base tier is used. Models without
+  any researched rate still count tokens but are excluded from the dollar
+  total.
 - The local window is the calendar month. Zed's billing month resets on the
   subscription's billing date, so the two windows can differ by a few days.
 

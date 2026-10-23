@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-10-23
+
+### Fixed
+
+- Added the missing local price rows for Claude Haiku 5.5, Gemini 4 Argon,
+  Gemini 3.8 Flash, Gemini 2.5 Pro, and Grok 4. Rates use the provider list
+  price +10% where Zed's hosted-model page does not list the model; base tiers
+  only.
+- The model-catalog cache now stays beside the account store that owns it,
+  instead of always using the default home directory. A test or a custom store
+  can no longer overwrite `~/.zed2api/model-catalog.json`.
+
 ## [0.1.1] - 2026-10-23
 
 ### Fixed

@@ -59,6 +59,16 @@ describe("Zed price table", () => {
 		expect(ratesFor("gpt-5.6-luna-20260101")?.output).toBe(1.32);
 		expect(ratesFor("claude-sonnet-5-5")?.cacheWrite).toBe(2.75);
 		expect(ratesFor("gemini-3.1-pro-preview")?.input).toBe(2.2);
+		expect(ratesFor("claude-haiku-5-5")).toMatchObject({
+			input: 0.11,
+			output: 0.55,
+			cacheRead: 0.011,
+			cacheWrite: 0.1375,
+		});
+		expect(ratesFor("gemini-4-argon")?.input).toBe(2.2);
+		expect(ratesFor("gemini-3.8-flash")?.output).toBe(4.125);
+		expect(ratesFor("gemini-2.5-pro")?.input).toBe(1.375);
+		expect(ratesFor("grok-4")).toMatchObject({ input: 3.3, output: 16.5, cacheRead: 0.825 });
 		expect(ratesFor("unknown-model")).toBeNull();
 	});
 
@@ -71,6 +81,10 @@ describe("Zed price table", () => {
 			costFor("claude-sonnet-5", { input: 0, output: 0, cacheRead: 1_000_000, cacheWrite: 1_000_000 }),
 		).toBeCloseTo(2.97, 10);
 		expect(costFor("unknown-model", { input: 1_000_000, output: 0, cacheRead: 0, cacheWrite: 0 })).toBeNull();
+		expect(costFor("grok-4", { input: 1_000_000, output: 1_000_000, cacheRead: 0, cacheWrite: 0 })).toBeCloseTo(
+			19.8,
+			10,
+		);
 	});
 });
 

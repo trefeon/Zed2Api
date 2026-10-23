@@ -518,7 +518,7 @@ export function createZedProvider(input: ZedProviderInput): ProviderConfig {
 	const deps: ZedProviderDeps = { store: input.store, transport, fetchImpl: input.fetchImpl };
 	// PI lists models without running a provider refresh, so the last live
 	// catalog is cached and used as the initial list; a discovery refreshes it.
-	const cachedIds = readCachedCatalog(input.store.current()?.userId);
+	const cachedIds = readCachedCatalog(input.store.current()?.userId, input.store.path);
 	// Both hosts refresh the catalog on their own schedule, with different
 	// fallback rules: OMP keeps the static list when discovery returns nothing,
 	// while PI *replaces* the catalog with whatever `refreshModels` returns —
@@ -529,7 +529,7 @@ export function createZedProvider(input: ZedProviderInput): ProviderConfig {
 		try {
 			const jwt = await input.store.tokenFor(account, input.fetchImpl);
 			const ids = extractModelIds(await transport.models(jwt));
-			writeCachedCatalog(account.userId, ids);
+			writeCachedCatalog(account.userId, ids, input.store.path);
 			return ids.map(zedModelConfig);
 		} catch {
 			return [];
@@ -577,7 +577,7 @@ export function createZedProvider(input: ZedProviderInput): ProviderConfig {
 				try {
 					await input.store.ensureOrganization(account);
 					const jwt = await input.store.tokenFor(account, input.fetchImpl);
-					writeCachedCatalog(account.userId, extractModelIds(await transport.models(jwt)));
+					writeCachedCatalog(account.userId, extractModelIds(await transport.models(jwt)), input.store.path);
 				} catch {
 					// The first token request resolves the organization again, and
 					// the host refreshes the catalog on its own schedule.

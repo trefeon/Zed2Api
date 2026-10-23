@@ -11,6 +11,7 @@ import type { AssistantMessage, AssistantMessageEvent } from "@oh-my-pi/pi-ai";
 
 import { createZedProvider, streamZedTurn, zedModelConfig } from "../src/provider.ts";
 import { readUsage } from "../src/usage.ts";
+import { readCachedCatalog } from "../src/zed/catalog.ts";
 import {
 	ANTHROPIC_STREAM,
 	FAILURE_LINE,
@@ -323,10 +324,17 @@ describe("catalog discovery", () => {
 			bodies: [],
 			modelIds: ["gpt-5.6-sol", "claude-sonnet-5", "gemini-2.5-pro", "grok-4"],
 		});
-		const provider = createZedProvider({ store: seededStore(tempStorePath()), transport: stub.transport });
+		const store = seededStore(tempStorePath());
+		const provider = createZedProvider({ store, transport: stub.transport });
 		if (!provider.refreshModels) throw new Error("provider has no refreshModels hook");
 		const models = await provider.refreshModels();
 		expect(models.map((model) => model.id)).toEqual(["gpt-5.6-sol", "claude-sonnet-5", "gemini-2.5-pro", "grok-4"]);
+		expect(readCachedCatalog("user-main", store.path)).toEqual([
+			"gpt-5.6-sol",
+			"claude-sonnet-5",
+			"gemini-2.5-pro",
+			"grok-4",
+		]);
 		const gemini = models.find((model) => model.id === "gemini-2.5-pro");
 		expect(gemini).toMatchObject({ contextWindow: 1_048_576, maxTokens: 65_536, reasoning: false });
 		expect(gemini?.thinking).toBeUndefined();

@@ -17,7 +17,7 @@ pi install npm:pi-zed-provider
 Pin a version when you need reproducibility:
 
 ```sh
-pi install npm:pi-zed-provider@0.1.1
+pi install npm:pi-zed-provider@0.1.2
 ```
 
 From a source checkout:

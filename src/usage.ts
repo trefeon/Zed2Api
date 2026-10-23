@@ -13,7 +13,20 @@ import { dirname, join } from "node:path";
 import { STORE_DIR_MODE, STORE_FILE_MODE } from "./accounts.ts";
 import type { DashboardUsage } from "./zed/dashboard.ts";
 
-/** Prices are US dollars per 1M tokens, from zed.dev/docs/account/zed-hosted-models. */
+/**
+ * Prices are US dollars per 1M tokens at the Zed price (provider list +10%).
+ * Verified 2026-10-23 against:
+ * - zed.dev/docs/account/zed-hosted-models for every model listed there.
+ * - anthropic.com/claude-haiku-5-5: $0.10/$0.50 up to 100k prompt tokens,
+ *   $0.50/$2.50 above it; the base tier is recorded here.
+ * - ai.google.dev/gemini-api/docs/pricing: Gemini 4 Argon $2/$10 through
+ *   2026-11-30, Gemini 3.8 Flash $0.75/$3.75 through 2026-12-31.
+ * - Gemini 2.5 Pro historical list price $1.25/$10 (retired from Zed).
+ * - Grok 4 historical list price $3/$15 with $0.75 cached input (retired
+ *   from Zed).
+ * Long-context tiers and date-based price changes are not modeled; costFor
+ * applies the base tier.
+ */
 export interface TokenRates {
 	input: number;
 	output: number;
@@ -42,6 +55,7 @@ export const MODEL_RATES: Record<string, TokenRates> = {
 	"claude-sonnet-4-6": rate(3.3, 16.5, 0.33, 4.125),
 	"claude-sonnet-4-5": rate(3.3, 16.5, 0.33, 4.125),
 	"claude-haiku-4-5": rate(1.1, 5.5, 0.11, 1.375),
+	"claude-haiku-5-5": rate(0.11, 0.55, 0.011, 0.1375),
 	"gpt-6.1-sol": rate(2.2, 11, 0.11, 2.75),
 	"gpt-6-astra": rate(11, 55, 1.1, 13.75),
 	"gpt-6-sol": rate(2.2, 11, 0.22, 2.75),
@@ -59,10 +73,14 @@ export const MODEL_RATES: Record<string, TokenRates> = {
 	"gpt-5.2": rate(1.925, 15.4, 0.1925),
 	"gpt-5-mini": rate(0.275, 2.2, 0.0275),
 	"gpt-5-nano": rate(0.055, 0.44, 0.0055),
+	"gemini-4-argon": rate(2.2, 11),
+	"gemini-3.8-flash": rate(0.825, 4.125),
 	"gemini-3.1-pro-preview": rate(2.2, 13.2),
 	"gemini-3.1-pro": rate(2.2, 13.2),
 	"gemini-3.5-flash": rate(1.65, 9.9),
 	"gemini-3-flash": rate(0.55, 3.3),
+	"gemini-2.5-pro": rate(1.375, 11),
+	"grok-4": rate(3.3, 16.5, 0.825),
 };
 
 /** Longest key first so `claude-sonnet-5-5` cannot match the `5` prefix. */
