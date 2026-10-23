@@ -10,6 +10,7 @@
  */
 
 import { asRecord } from "../json.ts";
+import { currentClientVersion } from "./clientVersion.ts";
 import { LLM_TOKENS_URL, USER_INFO_URL, tokenHeaders } from "./constants.ts";
 import { wireRequest } from "./http.ts";
 import { resolveSystemId } from "./system.ts";
@@ -75,7 +76,7 @@ export async function fetchAccountIdentity(options: AccountInfoOptions): Promise
 		{
 			method: "GET",
 			url: USER_INFO_URL,
-			headers: tokenHeaders(options.userId, options.credential, resolveSystemId()),
+			headers: tokenHeaders(options.userId, options.credential, resolveSystemId(), currentClientVersion()),
 			signal: options.signal,
 		},
 		options.fetchImpl,
@@ -130,7 +131,7 @@ export async function fetchLlmToken(options: FetchTokenOptions): Promise<ZedToke
 		{
 			method: "POST",
 			url: LLM_TOKENS_URL,
-			headers: tokenHeaders(options.userId, options.credential, resolveSystemId()),
+			headers: tokenHeaders(options.userId, options.credential, resolveSystemId(), currentClientVersion()),
 			body: JSON.stringify({ organization_id: options.organizationId }),
 			signal: options.signal,
 		},

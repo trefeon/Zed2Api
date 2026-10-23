@@ -7,9 +7,9 @@
  * `Authorization: <user_id> <access_token>`, with `x-zed-system-id` on the
  * token and user-info calls; `crates/language_models_cloud` adds the
  * capability flags the edge uses to gate model families and stream status.
- * There is no User-Agent and no Accept header anywhere in that path, so the
- * builders here add neither - a browser/Node/Bun default header is a tell the
- * upstream never sees from the real client.
+ * `crates/zed/src/main.rs` installs one global
+ * `User-Agent: Zed/<AppVersion> (<OS>; <ARCH>)` on the reqwest client, so
+ * every request carries it. There is no Accept header in that path.
  */
 
 /**
@@ -32,33 +32,50 @@ export const MODELS_URL = `${ZED_CLOUD}/models`;
 export const LLM_TOKENS_URL = `${ZED_CLOUD}/client/llm_tokens`;
 export const USER_INFO_URL = `${ZED_CLOUD}/client/users/me`;
 
+/** The global `User-Agent` the real Zed client installs on its HTTP client. */
+export function zedUserAgent(appVersion: string): string {
+	const platforms: Record<string, string> = { win32: "windows", darwin: "macos" };
+	const architectures: Record<string, string> = { x64: "x86_64", arm64: "aarch64", ia32: "x86" };
+	const os = platforms[process.platform] ?? process.platform;
+	const arch = architectures[process.arch] ?? process.arch;
+	return `Zed/${appVersion} (${os}; ${arch})`;
+}
+
 /**
  * Completions headers, exactly as `language_models_cloud` sends them.
  * `appVersion` must be a released Zed version; the edge rejects stale clients.
  */
 export function completionsHeaders(jwt: string, appVersion: string): Record<string, string> {
 	return {
-		authorization: `Bearer ${jwt}`,
-		"content-type": "application/json",
 		"x-zed-version": appVersion,
+		"content-type": "application/json",
+		authorization: `Bearer ${jwt}`,
 		"x-zed-client-supports-status-messages": "true",
 		"x-zed-client-supports-stream-ended-request-completion-status": "true",
+		"user-agent": zedUserAgent(appVersion),
 	};
 }
 
 /** The model list gates the xAI/Gemini rows behind this capability flag. */
-export function modelsHeaders(jwt: string): Record<string, string> {
+export function modelsHeaders(jwt: string, appVersion: string): Record<string, string> {
 	return {
-		authorization: `Bearer ${jwt}`,
 		"x-zed-client-supports-x-ai": "true",
+		authorization: `Bearer ${jwt}`,
+		"user-agent": zedUserAgent(appVersion),
 	};
 }
 
 /** The token and user-info endpoints authenticate with `<user_id> <credential blob>`. */
-export function tokenHeaders(userId: string, credential: string, systemId: string): Record<string, string> {
+export function tokenHeaders(
+	userId: string,
+	credential: string,
+	systemId: string,
+	appVersion: string,
+): Record<string, string> {
 	return {
-		authorization: `${userId} ${credential}`,
-		"content-type": "application/json",
 		"x-zed-system-id": systemId,
+		"content-type": "application/json",
+		authorization: `${userId} ${credential}`,
+		"user-agent": zedUserAgent(appVersion),
 	};
 }

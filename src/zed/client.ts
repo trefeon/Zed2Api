@@ -64,6 +64,8 @@ export function createZedTransport(options: TransportOptions = {}): ZedTransport
 	// tests inject a fetch and the mock upstream sets ZED_API_BASE, so neither
 	// ever reaches GitHub.
 	const allowVersionRefresh = !fetchImpl && !process.env.ZED_API_BASE;
+	const versionForRequest = async (): Promise<string> =>
+		allowVersionRefresh ? resolveClientVersion() : currentClientVersion();
 
 	const withTimeout = (signal: AbortSignal | undefined): { signal: AbortSignal; cancel: () => void; timedOut: () => boolean } => {
 		const controller = new AbortController();
@@ -105,7 +107,7 @@ export function createZedTransport(options: TransportOptions = {}): ZedTransport
 		async completions(jwt: string, body: unknown, signal?: AbortSignal): Promise<WireResponse> {
 			const scoped = withTimeout(signal);
 			try {
-				const version = allowVersionRefresh ? await resolveClientVersion() : currentClientVersion();
+				const version = await versionForRequest();
 				const response = await wireRequest(
 					{
 						method: "POST",
@@ -131,8 +133,9 @@ export function createZedTransport(options: TransportOptions = {}): ZedTransport
 		async models(jwt: string, signal?: AbortSignal): Promise<unknown> {
 			const scoped = withTimeout(signal);
 			try {
+				const version = await versionForRequest();
 				const response = await wireRequest(
-					{ method: "GET", url: MODELS_URL, headers: modelsHeaders(jwt), signal: scoped.signal },
+					{ method: "GET", url: MODELS_URL, headers: modelsHeaders(jwt, version), signal: scoped.signal },
 					fetchImpl,
 				);
 				if (!response.ok) throw new ZedHttpError(response.status, await readErrorBody(response));
@@ -151,11 +154,12 @@ export function createZedTransport(options: TransportOptions = {}): ZedTransport
 		async userInfo(userId: string, credential: string, signal?: AbortSignal): Promise<unknown> {
 			const scoped = withTimeout(signal);
 			try {
+				const version = await versionForRequest();
 				const response = await wireRequest(
 					{
 						method: "GET",
 						url: USER_INFO_URL,
-						headers: tokenHeaders(userId, credential, resolveSystemId()),
+						headers: tokenHeaders(userId, credential, resolveSystemId(), version),
 						signal: scoped.signal,
 					},
 					fetchImpl,

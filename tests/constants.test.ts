@@ -17,6 +17,7 @@ import {
 	modelsHeaders,
 	tokenHeaders,
 	zedCloudBase,
+	zedUserAgent,
 } from "../src/zed/constants.ts";
 
 const X_AI_FLAG = "x-zed-client-supports-x-ai";
@@ -30,33 +31,42 @@ afterEach(() => {
 });
 
 describe("zed capability headers", () => {
-	test("the model list advertises only the x-ai capability", () => {
-		const headers = modelsHeaders("jwt-token");
+	test("the model list advertises x-ai and the real client agent", () => {
+		const headers = modelsHeaders("jwt-token", "1.25.2");
 
 		expect(headers[X_AI_FLAG]).toBe("true");
 		expect(headers["authorization"]).toBe("Bearer jwt-token");
+		expect(headers["user-agent"]).toMatch(/^Zed\/1\.25\.2 \([a-z0-9_]+; [a-z0-9_]+\)$/);
 		expect(headers["x-zed-version"]).toBeUndefined();
 	});
 
-	test("the completions request carries the released version and stream flags", () => {
+	test("the completions request carries the released version, agent and stream flags", () => {
 		const headers = completionsHeaders("jwt-token", "1.25.2");
 
 		expect(headers[STREAM_ENDED_FLAG]).toBe("true");
 		expect(headers["x-zed-client-supports-status-messages"]).toBe("true");
 		expect(headers["x-zed-version"]).toBe("1.25.2");
+		expect(headers["user-agent"]).toMatch(/^Zed\/1\.25\.2 \([a-z0-9_]+; [a-z0-9_]+\)$/);
 		expect(headers["content-type"]).toBe("application/json");
-		// Current upstream sends neither, and fetch defaults would betray the host.
-		expect(headers["user-agent"]).toBeUndefined();
 		expect(headers["accept"]).toBeUndefined();
 	});
 
-	test("the token endpoint names the account and the install", () => {
-		const headers = tokenHeaders("123456", "credential-blob", "test-system-id");
+	test("the token endpoint names the account, the install and the client", () => {
+		const headers = tokenHeaders("123456", "credential-blob", "test-system-id", "1.25.2");
 
 		expect(headers["authorization"]).toBe("123456 credential-blob");
 		expect(headers["x-zed-system-id"]).toBe("test-system-id");
+		expect(headers["user-agent"]).toMatch(/^Zed\/1\.25\.2 \([a-z0-9_]+; [a-z0-9_]+\)$/);
 		expect(headers["content-type"]).toBe("application/json");
-		expect(headers["user-agent"]).toBeUndefined();
+	});
+
+	test("the agent uses Zed's OS and architecture names", () => {
+		const agent = zedUserAgent("1.25.2");
+
+		expect(agent).not.toContain("win32");
+		expect(agent).not.toContain("darwin");
+		expect(agent).not.toContain("x64");
+		expect(agent).not.toContain("arm64");
 	});
 });
 

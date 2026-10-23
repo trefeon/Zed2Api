@@ -125,6 +125,7 @@ All settings are optional. Credentials live outside the repository.
 | `ZED2API_CLAUDE_MAX_TOKENS` | Override the Anthropic output cap |
 | `ZED2API_GPT_MAX_TOKENS` | Override the OpenAI output cap |
 | `ZED2API_CLIENT_VERSION` | Override the Zed client version sent upstream |
+| `ZED2API_HTTP1` | `1` forces HTTP/1.1 for the HTTPS edge (debugging only) |
 | `ZED2API_SYSTEM_ID` | Override the per-install system id |
 
 ## Development
