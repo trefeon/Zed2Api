@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-10-23
+
+### Changed
+
+- Upstream requests now carry Zed's real global
+  `User-Agent: Zed/<version> (<OS>; <ARCH>)`, using the same auto-refreshed
+  release version as `x-zed-version`.
+- The HTTPS edge is reached over HTTP/2 with hyper-compatible SETTINGS
+  (2 MiB stream window, 5 MiB connection window, 16 KiB frames/header list),
+  rustls-compatible TLS cipher/group/signature preferences including the
+  X25519MLKEM768 hybrid group, request header ordering, and reqwest's
+  15-second PING / 10-second timeout keepalive.
+- Sessions are pooled per origin and closed after 30 seconds idle.
+  `ZED2API_HTTP1=1` remains as a debugging escape hatch.
+
 ## [0.1.2] - 2026-10-23
 
 ### Fixed
