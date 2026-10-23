@@ -27,7 +27,7 @@ Git sources are also accepted:
 
 ```sh
 omp plugin install github:trefeon/Zed2Api
-omp plugin install github:trefeon/Zed2Api#v0.1.3
+omp plugin install github:trefeon/Zed2Api#v0.2.0
 ```
 
 A `.tgz` is not an installable source. Unpack it and install the directory
@@ -70,10 +70,30 @@ omp -p --model zed/gpt-5.6-luna "Reply with OK"
 
 ## Update and remove
 
+An npm install upgrades itself. At session start, in interactive sessions only,
+the plugin asks the npm registry for the latest release (cached for six hours)
+and runs:
+
 ```sh
 omp plugin upgrade pi-zed-provider
+```
+
+The upgraded code loads on the next OMP start; nothing reloads in a running
+process. `/zed update` forces a check now. A failed attempt is not retried for
+24 hours, so run the command above by hand if the notice reports one.
+
+A linked source checkout is not upgraded by the plugin: it is seen as a working
+tree. Pull the checkout and reinstall:
+
+```sh
+git pull
+omp plugin install . --force
+```
+
+Remove:
+
+```sh
 omp plugin uninstall pi-zed-provider
 ```
 
-A local-path install cannot be upgraded; reinstall it after pulling changes.
 The account store is left untouched by uninstall.

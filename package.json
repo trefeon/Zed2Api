@@ -1,6 +1,6 @@
 {
 	"name": "pi-zed-provider",
-	"version": "0.1.3",
+	"version": "0.2.0",
 	"type": "module",
 	"main": "index.ts",
 	"description": "Use a Zed subscription as a native model provider in PI and OMP",

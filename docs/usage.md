@@ -117,6 +117,21 @@ To use it:
 When a dashboard cookie is configured, `/zed usage` also prints the dashboard's
 `edit_predictions` counter, e.g. `0 used of unlimited`.
 
+## Update checks
+
+The plugin keeps itself current; this section only covers the commands and what
+they report.
+
+```text
+/zed update           # check npm now, bypassing the six-hour cache
+/zed status           # show a cached "x.y.z is available" line, no network
+```
+
+A session start performs the same check in the background, but only when the
+host has an interactive UI. Print and subagent runs never upgrade.
+`ZED2API_SKIP_UPDATE_CHECK=1` disables the check for both paths. Upgraded code
+stays inactive until the host restarts.
+
 ## Notes
 
 - Local metering starts when this version records its first turn; earlier turns

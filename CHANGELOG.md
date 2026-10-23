@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-24
+
+### Added
+
+- Self-update at session start. When a session begins on a host with a UI, the
+  extension asks the npm registry whether a newer release exists (4-second
+  timeout, answer cached for 6 hours in `~/.zed2api/update-check.json` beside
+  the account store) and installs it with the host's own package manager:
+  `omp plugin upgrade pi-zed-provider` for OMP, `pi update npm:pi-zed-provider`
+  for PI. The version is re-read from the installed `package.json` after the
+  command; the exit code alone is not proof of an upgrade.
+- `/zed update` runs the check immediately, ignoring the cached answer, and
+  reports the outcome. `/zed status` adds the cached "`x.y.z` is available"
+  line without touching the network.
+- `ZED2API_SKIP_UPDATE_CHECK=1` disables the updater entirely.
+- Print and subagent runs never start an upgrade, because they have no notice
+  path. Only an applied upgrade or a failure is reported; an install that is
+  already current stays silent.
+- A failed attempt is remembered for 24 hours, and `update.lock` (stale after
+  10 minutes) keeps two sessions from upgrading at the same time.
+- A source checkout is never pulled. The updater reports it as unmanaged and
+  leaves `git pull` to the operator.
+
 ## [0.1.3] - 2026-10-23
 
 ### Changed

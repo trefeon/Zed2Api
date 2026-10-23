@@ -64,6 +64,26 @@ account to `~/.zed2api/accounts.json` with owner-only permissions.
 | `/zed models` / `/zed refresh` | Print or refresh the live model catalog |
 | `/zed probe [name]` | Send a 32-token completion per account and report state |
 | `/zed usage [--json] [--all]` | Local token spend; exact plan usage when a dashboard cookie is configured |
+| `/zed update` | Check npm now and upgrade this install |
+
+## Updating
+
+Installs made from npm upgrade themselves. At session start, when the host has
+an interactive UI, the extension checks the npm registry (once per six hours)
+and runs the host's own upgrade command:
+
+- OMP install under `~/.omp/plugins/`: `omp plugin upgrade pi-zed-provider`
+- PI install under `~/.pi/agent/`: `pi update npm:pi-zed-provider`
+
+Only an applied upgrade or a failure is reported. `/zed update` checks
+immediately and prints the result, and `/zed status` shows a cached "available"
+line without a network call. Restart the host afterwards: neither PI nor OMP
+reloads provider code in a running session.
+
+A source checkout is never pulled. The updater reports it as unmanaged, so
+`git pull` and a reinstall are yours to run.
+
+`ZED2API_SKIP_UPDATE_CHECK=1` turns the updater off, including `/zed update`.
 
 ## Models
 
@@ -127,6 +147,7 @@ All settings are optional. Credentials live outside the repository.
 | `ZED2API_CLIENT_VERSION` | Override the Zed client version sent upstream |
 | `ZED2API_HTTP1` | `1` forces HTTP/1.1 for the HTTPS edge (debugging only) |
 | `ZED2API_SYSTEM_ID` | Override the per-install system id |
+| `ZED2API_SKIP_UPDATE_CHECK` | Any value disables the npm self-update check |
 
 ## Development
 

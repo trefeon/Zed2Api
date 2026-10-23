@@ -21,9 +21,10 @@ import { loginToZed, openInBrowser } from "./zed/auth.ts";
 import { dashboardCookie, dashboardUsageUrl, fetchDashboardUsage, type DashboardUsage } from "./zed/dashboard.ts";
 import { writeCachedCatalog } from "./zed/catalog.ts";
 import { createZedTransport, extractModelIds } from "./zed/client.ts";
+import { formatUpdateResult, maybeAutoUpdate, PACKAGE_NAME, pendingUpdate } from "./update.ts";
 
 const PROVIDER = "zed";
-const SUBCOMMANDS = ["status", "login", "accounts", "switch", "forget", "models", "refresh", "probe", "usage"];
+const SUBCOMMANDS = ["status", "login", "accounts", "switch", "forget", "models", "refresh", "probe", "usage", "update"];
 
 const USAGE = [
 	"Usage: /zed <command>",
@@ -36,6 +37,7 @@ const USAGE = [
 	"  refresh             re-fetch the model catalog",
 	"  probe [name]        send a 32-token probe to one account (or all)",
 	"  usage [--json] [--all]  local token spend at Zed rates; exact plan usage with a dashboard cookie",
+	"  update              compare with the published release and upgrade this install",
 ].join("\n");
 
 type Notify = (message: string, level?: "info" | "warning" | "error") => void;
@@ -113,6 +115,19 @@ export default async function zed2api(pi: ExtensionAPI): Promise<void> {
 			storeError = describe(error);
 			commandNotify(ctx)(formatStoreError(store, storeError), "error");
 		}
+		// Silent self-update. Print and subagent runs have no notice path of
+		// their own — a stray line corrupts the answer the caller is piping —
+		// so they never start an upgrade they cannot report.
+		if (!ctx.hasUI) return;
+		void maybeAutoUpdate({ storePath: store.path })
+			.then((result) => {
+				if (result.status === "updated" || result.status === "failed") {
+					commandNotify(ctx)(formatUpdateResult(result), result.status === "updated" ? "info" : "warning");
+				}
+			})
+			.catch(() => {
+				// An updater that breaks a session start is worse than a stale build.
+			});
 	});
 }
 
@@ -216,6 +231,13 @@ async function runCommand(deps: ZedProviderDeps, args: string, notify: Notify, s
 			}
 			return;
 		}
+		case "update": {
+			notify(`Checking npm for a newer ${PACKAGE_NAME}…`);
+			const result = await maybeAutoUpdate({ storePath: store.path, force: true });
+			const message = formatUpdateResult(result);
+			if (message.length > 0) notify(message, result.status === "failed" ? "warning" : "info");
+			return;
+		}
 		case "probe": {
 			const targets = rest[0] ? [store.find(rest[0])].filter((entry) => entry !== null) : store.tryOrder();
 			if (targets.length === 0) {
@@ -250,6 +272,8 @@ function reportStatus(store: AccountStore, notify: Notify, storeError: string | 
 	const lines = [`zed2api — ${store.length} account(s) in ${store.path}`];
 	for (const summary of store.summaries()) lines.push(formatSummary(summary));
 	lines.push(`Run /zed models for the live catalog, /zed probe to test an account.`);
+	const update = pendingUpdate(store.path);
+	if (update !== null) lines.push(update);
 	notify(lines.join("\n"));
 }
 

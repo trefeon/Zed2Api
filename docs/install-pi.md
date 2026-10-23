@@ -17,7 +17,7 @@ pi install npm:pi-zed-provider
 Pin a version when you need reproducibility:
 
 ```sh
-pi install npm:pi-zed-provider@0.1.3
+pi install npm:pi-zed-provider@0.2.0
 ```
 
 From a source checkout:
@@ -72,8 +72,31 @@ picker, `--list-models`, or a turn instead.
 
 ## Update and remove
 
+An npm install upgrades itself. At session start, in interactive sessions only,
+the plugin asks the npm registry for the latest release (cached for six hours)
+and runs:
+
 ```sh
-pi update --extensions
+pi update npm:pi-zed-provider
+```
+
+The upgraded code loads on the next PI start; nothing reloads in a running
+session. `/zed update` forces a check now. A failed attempt is not retried for
+24 hours, so run the command above by hand if the notice reports one.
+`pi update --extensions` upgrades registry packages only and skips a
+local-path install.
+
+For a source checkout, pull and reinstall; the checkout is never pulled for
+you:
+
+```sh
+git pull
+pi install .
+```
+
+Remove:
+
+```sh
 pi remove npm:pi-zed-provider
 ```
 
