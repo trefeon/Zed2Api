@@ -110,6 +110,31 @@ const H2_TLS: SecureClientSessionOptions = {
 
 const h2Sessions = new Map<string, Promise<ClientHttp2Session>>();
 
+/**
+ * Live request count per HTTP/2 session. An idle session stays unrefed so it
+ * never pins the process, but every in-flight request refs its session so the
+ * event loop cannot drain while a response is still arriving. Without this, a
+ * request issued during startup (Pi's model-catalog fetch) can lose the race
+ * and Node exits with code 0 before the caller resumes.
+ */
+const h2Active = new WeakMap<ClientHttp2Session, number>();
+
+function retainSession(session: ClientHttp2Session): void {
+	const active = (h2Active.get(session) ?? 0) + 1;
+	h2Active.set(session, active);
+	if (active === 1) session.ref?.();
+}
+
+function releaseSession(session: ClientHttp2Session): void {
+	const active = (h2Active.get(session) ?? 1) - 1;
+	if (active > 0) {
+		h2Active.set(session, active);
+		return;
+	}
+	h2Active.set(session, 0);
+	session.unref?.();
+}
+
 /** reqwest's HTTP/2 keepalive: PING every 15s, drop after 10s without an ACK. */
 function startKeepAlive(session: ClientHttp2Session): void {
 	const timer = setInterval(() => {
@@ -146,6 +171,9 @@ function h2Session(origin: string): Promise<ClientHttp2Session> {
 			session.setLocalWindowSize(5 * 1024 * 1024);
 			startKeepAlive(session);
 			resolve(session);
+			// The socket stays referenced through the handshake. Drop it once
+			// connected unless a request already holds the session.
+			if ((h2Active.get(session) ?? 0) === 0) session.unref?.();
 		});
 		session.once("error", reject);
 	});
@@ -164,7 +192,6 @@ function h2Session(origin: string): Promise<ClientHttp2Session> {
 	// reqwest's pool_idle_timeout is 30s. The timer closes an idle session,
 	// not an active stream.
 	session.setTimeout(30_000, () => session.close());
-	session.unref?.();
 	return ready;
 }
 
@@ -172,6 +199,14 @@ function fromHttp2(request: WireRequest, url: URL): Promise<WireResponse> {
 	return h2Session(url.origin).then(
 		(session) =>
 			new Promise<WireResponse>((resolve, reject) => {
+				retainSession(session);
+				let released = false;
+				const release = () => {
+					if (released) return;
+					released = true;
+					releaseSession(session);
+				};
+
 				const headers: Record<string, string> = {
 					":method": request.method,
 					":path": `${url.pathname}${url.search}`,
@@ -184,6 +219,7 @@ function fromHttp2(request: WireRequest, url: URL): Promise<WireResponse> {
 				try {
 					stream = session.request(headers, { endStream: request.body === undefined });
 				} catch (error) {
+					release();
 					reject(new Http2Unavailable(String(error)));
 					return;
 				}
@@ -235,6 +271,7 @@ function fromHttp2(request: WireRequest, url: URL): Promise<WireResponse> {
 					});
 				});
 				stream.once("error", (error) => {
+					release();
 					if (settled) return;
 					settled = true;
 					responded = true;
@@ -242,6 +279,7 @@ function fromHttp2(request: WireRequest, url: URL): Promise<WireResponse> {
 					reject(error);
 				});
 				stream.once("close", () => {
+					release();
 					cleanup();
 					if (!responded) {
 						responded = true;
